@@ -65,9 +65,9 @@
     <script>
       window.__received_messages = [];
 
-      function updatePreview(postData) {
-        if (!postData) return;
-        var data = postData.data || postData;
+      function updatePreview(payload) {
+        if (!payload) return;
+        var data = payload.data || (payload.post && payload.post.data) || payload;
         var titleEl = document.getElementById('post-title');
         var dateEl = document.getElementById('post-date');
         var bodyEl = document.getElementById('post-body');
@@ -78,8 +78,13 @@
         if (dateEl && data.date) {
           dateEl.textContent = 'Published on ' + data.date;
         }
-        if (bodyEl && data.body !== undefined) {
-          bodyEl.textContent = data.body;
+        if (bodyEl) {
+          var html = payload.html || data.html || (payload.post && payload.post.html);
+          if (html) {
+            bodyEl.innerHTML = html;
+          } else if (data.body !== undefined) {
+            bodyEl.textContent = data.body;
+          }
         }
       }
 
@@ -97,7 +102,7 @@
 
         if (payload.type === 'DECAP_CMS_PREVIEW_DATA' || payload.type === 'CMS_PREVIEW_DATA') {
           window.__last_preview_payload = payload;
-          updatePreview(payload.entry || payload.data);
+          updatePreview(payload);
         }
       });
 
