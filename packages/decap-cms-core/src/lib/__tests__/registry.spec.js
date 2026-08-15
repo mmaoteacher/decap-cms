@@ -258,4 +258,79 @@ describe('registry', () => {
       });
     });
   });
+
+  describe('previewScripts', () => {
+    it('can register a preview script as a string url', () => {
+      const { registerPreviewScript, getPreviewScripts } = require('../registry');
+
+      registerPreviewScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js');
+
+      expect(getPreviewScripts()).toContainEqual({
+        value: 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js',
+      });
+    });
+
+    it('can register a preview script with options', () => {
+      const { registerPreviewScript, getPreviewScripts } = require('../registry');
+
+      registerPreviewScript('https://cdn.example.com/lib.js', {
+        async: true,
+        defer: true,
+        type: 'module',
+      });
+
+      expect(getPreviewScripts()).toContainEqual({
+        value: 'https://cdn.example.com/lib.js',
+        async: true,
+        defer: true,
+        type: 'module',
+      });
+    });
+
+    it('can register a preview script object with src', () => {
+      const { registerPreviewScript, getPreviewScripts } = require('../registry');
+
+      registerPreviewScript({
+        src: '/admin/preview-init.js',
+        type: 'module',
+        async: true,
+      });
+
+      expect(getPreviewScripts()).toContainEqual({
+        raw: false,
+        src: '/admin/preview-init.js',
+        value: '/admin/preview-init.js',
+        type: 'module',
+        async: true,
+      });
+    });
+
+    it('can register an inline preview script with code', () => {
+      const { registerPreviewScript, getPreviewScripts } = require('../registry');
+
+      registerPreviewScript({
+        code: 'window.__preview_init = true;',
+        type: 'text/javascript',
+      });
+
+      expect(getPreviewScripts()).toContainEqual({
+        raw: true,
+        code: 'window.__preview_init = true;',
+        value: 'window.__preview_init = true;',
+        type: 'text/javascript',
+      });
+    });
+
+    it('can register an inline preview script with raw option', () => {
+      const { registerPreviewScript, getPreviewScripts } = require('../registry');
+
+      registerPreviewScript('console.log("hello");', { raw: true });
+
+      expect(getPreviewScripts()).toContainEqual({
+        raw: true,
+        value: 'console.log("hello");',
+      });
+    });
+  });
 });
+
