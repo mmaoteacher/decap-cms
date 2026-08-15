@@ -24,6 +24,7 @@ const registry = {
   backends: {},
   templates: {},
   previewStyles: [],
+  previewScripts: [],
   widgets: {},
   editorComponents: Map(),
   remarkPlugins: [],
@@ -37,6 +38,8 @@ const registry = {
 export default {
   registerPreviewStyle,
   getPreviewStyles,
+  registerPreviewScript,
+  getPreviewScripts,
   registerPreviewTemplate,
   getPreviewTemplate,
   registerWidget,
@@ -76,6 +79,34 @@ export function registerPreviewStyle(style, opts) {
 }
 export function getPreviewStyles() {
   return registry.previewStyles;
+}
+
+/**
+ * Preview Scripts
+ *
+ * Valid options:
+ *  - raw {boolean} if `true`, `script` value is expected to be a JS string
+ *  - src {string} script source URL
+ *  - code {string} inline JS code
+ *  - type {string} e.g. 'module' or 'text/javascript'
+ *  - async {boolean}
+ *  - defer {boolean}
+ */
+export function registerPreviewScript(script, opts = {}) {
+  if (typeof script === 'string') {
+    registry.previewScripts.push({ ...opts, value: script });
+  } else if (typeof script === 'object' && script !== null) {
+    if (script.code) {
+      registry.previewScripts.push({ raw: true, value: script.code, ...opts, ...script });
+    } else if (script.src) {
+      registry.previewScripts.push({ raw: false, value: script.src, ...opts, ...script });
+    } else if (script.value) {
+      registry.previewScripts.push({ ...opts, ...script });
+    }
+  }
+}
+export function getPreviewScripts() {
+  return registry.previewScripts;
 }
 
 /**

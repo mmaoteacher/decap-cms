@@ -1,6 +1,6 @@
 import createReactClass from 'create-react-class';
 import React from 'react';
-import { DecapCmsApp as CMS } from 'decap-cms-app';
+import { DecapCmsApp as CMS, usePreviewFrame } from 'decap-cms-app';
 import './extensions';
 
 /**
@@ -18,6 +18,7 @@ if (!window.CMS_MANUAL_INIT) {
 if (typeof window !== 'undefined') {
   window.CMS = CMS;
   window.initCMS = CMS.init;
+  window.usePreviewFrame = usePreviewFrame;
   window.createClass = window.createClass || createReactClass;
   window.h = window.h || React.createElement;
   /**
@@ -28,7 +29,9 @@ if (typeof window !== 'undefined') {
   }
 }
 
+export { usePreviewFrame };
 export const DecapCms = {
   ...CMS,
+  usePreviewFrame,
 };
 export default CMS;

@@ -508,6 +508,21 @@ declare module 'decap-cms-core' {
     value: string;
   }
 
+  export interface PreviewScriptOptions {
+    raw?: boolean;
+    type?: string;
+    async?: boolean;
+    defer?: boolean;
+  }
+
+  export type PreviewScript =
+    | string
+    | { src: string; type?: string; async?: boolean; defer?: boolean }
+    | { code: string; type?: string; raw?: boolean }
+    | (PreviewScriptOptions & { value: string });
+
+  export function usePreviewFrame(): { window: Window; document: Document };
+
   export type CmsBackendClass = any; // TODO: type properly
 
   export interface CmsRegistryBackend {
@@ -581,6 +596,7 @@ declare module 'decap-cms-core' {
       [name: string]: ComponentType<any>;
     };
     previewStyles: PreviewStyle[];
+    previewScripts: PreviewScript[];
     widgets: {
       [name: string]: CmsWidget;
     };
@@ -627,6 +643,7 @@ declare module 'decap-cms-core' {
     getLocale: (locale: string) => CmsLocalePhrases | undefined;
     getMediaLibrary: (name: string) => CmsMediaLibrary | undefined;
     getPreviewStyles: () => PreviewStyle[];
+    getPreviewScripts: () => PreviewScript[];
     getPreviewTemplate: (name: string) => ComponentType<PreviewTemplateComponentProps> | undefined;
     getWidget: (name: string) => CmsWidget | undefined;
     getWidgetValueSerializer: (widgetName: string) => CmsWidgetValueSerializer | undefined;
@@ -641,6 +658,8 @@ declare module 'decap-cms-core' {
     registerLocale: (locale: string, phrases: CmsLocalePhrases) => void;
     registerMediaLibrary: (mediaLibrary: CmsMediaLibrary, options?: CmsMediaLibraryOptions) => void;
     registerPreviewStyle: (filePath: string, options?: PreviewStyleOptions) => void;
+    registerPreviewScript: (script: PreviewScript, options?: PreviewScriptOptions) => void;
+    usePreviewFrame: () => { window: Window; document: Document };
     registerPreviewTemplate: (
       name: string,
       component: ComponentType<PreviewTemplateComponentProps>,

@@ -12,6 +12,7 @@ import {
   resolveWidget,
   getPreviewTemplate,
   getPreviewStyles,
+  getPreviewScripts,
   getRemarkPlugins,
   getEditorComponents,
 } from '../../../lib/registry';
@@ -36,6 +37,71 @@ const PreviewPaneFrame = styled(Frame)`
   background: #fff;
   border-radius: ${lengths.borderRadius};
 `;
+
+class PreviewScripts extends React.Component {
+  injectedScriptElements = [];
+
+  componentDidMount() {
+    this.injectScripts();
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.scripts !== this.props.scripts || prevProps.document !== this.props.document) {
+      this.cleanup();
+      this.injectScripts();
+    }
+  }
+
+  componentWillUnmount() {
+    this.cleanup();
+  }
+
+  cleanup() {
+    this.injectedScriptElements.forEach(el => {
+      if (el && el.parentNode) {
+        el.parentNode.removeChild(el);
+      }
+    });
+    this.injectedScriptElements = [];
+  }
+
+  injectScripts() {
+    const { document: doc, scripts } = this.props;
+    if (!doc || !scripts || !scripts.length) return;
+
+    scripts.forEach(script => {
+      const scriptEl = doc.createElement('script');
+      if (script.type) {
+        scriptEl.type = script.type;
+      }
+      if (script.async) {
+        scriptEl.async = script.async;
+      }
+      if (script.defer) {
+        scriptEl.defer = script.defer;
+      }
+
+      const isInline = Boolean(script.raw || script.code);
+      if (isInline) {
+        scriptEl.textContent = script.code || script.value || '';
+      } else {
+        scriptEl.src = script.src || script.value;
+      }
+
+      doc.head.appendChild(scriptEl);
+      this.injectedScriptElements.push(scriptEl);
+    });
+  }
+
+  render() {
+    return null;
+  }
+}
+
+PreviewScripts.propTypes = {
+  document: PropTypes.any,
+  scripts: PropTypes.array,
+};
 
 export class PreviewPane extends React.Component {
   getWidget = (field, value, metadata, props, idx = null) => {
@@ -269,13 +335,15 @@ export class PreviewPane extends React.Component {
 
     const styleEls = getPreviewStyles().map((style, i) => {
       if (style.raw) {
-        return <style key={i}>{style.value}</style>;
+        return <style key={`style-${i}`}>{style.value}</style>;
       }
-      return <link key={i} href={style.value} type="text/css" rel="stylesheet" />;
+      return <link key={`style-${i}`} href={style.value} type="text/css" rel="stylesheet" />;
     });
 
+    const headEls = styleEls;
+
     if (!collection) {
-      <PreviewPaneFrame id="preview-pane" head={styleEls} />;
+      <PreviewPaneFrame id="preview-pane" head={headEls} />;
     }
 
     const initialContent = `
@@ -288,14 +356,17 @@ export class PreviewPane extends React.Component {
 
     return (
       <ErrorBoundary config={config}>
-        <PreviewPaneFrame id="preview-pane" head={styleEls} initialContent={initialContent}>
+        <PreviewPaneFrame id="preview-pane" head={headEls} initialContent={initialContent}>
           <FrameContextConsumer>
             {({ document, window }) => {
               return (
-                <EditorPreviewContent
-                  {...{ previewComponent, previewProps: { ...previewProps, document, window } }}
-                  onFieldClick={this.props.onFieldClick}
-                />
+                <React.Fragment>
+                  <PreviewScripts document={document} scripts={getPreviewScripts()} />
+                  <EditorPreviewContent
+                    {...{ previewComponent, previewProps: { ...previewProps, document, window } }}
+                    onFieldClick={this.props.onFieldClick}
+                  />
+                </React.Fragment>
               );
             }}
           </FrameContextConsumer>

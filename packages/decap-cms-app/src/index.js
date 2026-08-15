@@ -1,4 +1,4 @@
-import { DecapCmsCore as CMS } from 'decap-cms-core';
+import { DecapCmsCore as CMS, usePreviewFrame } from 'decap-cms-core';
 import './extensions.js';
 
 // Log version
@@ -8,7 +8,9 @@ if (typeof window !== 'undefined') {
   }
 }
 
+export { usePreviewFrame };
 export const DecapCmsApp = {
   ...CMS,
+  usePreviewFrame,
 };
 export default CMS;
