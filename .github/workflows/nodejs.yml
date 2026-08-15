@@ -9,8 +9,10 @@ on:
     branches:
       - main
       - master
+      - develop
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 jobs:
   changes:
@@ -36,8 +38,8 @@ jobs:
         include:
           - os: ubuntu-latest
             node-version: 22.x
-      fail-fast: true
-    if: ${{ needs.changes.outputs.cms == 'true' }}
+      fail-fast: false
+    if: ${{ needs.changes.outputs.cms == 'true' || github.event_name == 'workflow_dispatch' }}
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
@@ -57,8 +59,8 @@ jobs:
 
   e2e:
     needs: changes
-    if: ${{ needs.changes.outputs.cms == 'true' }}
-    runs-on: depot-ubuntu-24.04
+    if: ${{ needs.changes.outputs.cms == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js 24.x
@@ -102,4 +104,3 @@ jobs:
           path: |
             cypress/screenshots
             cypress/videos
-
