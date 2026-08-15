@@ -45,13 +45,20 @@ describe('External Preview URL and postMessage Bridge', () => {
       return checkUpdatedTitle();
     });
 
-    // Verify the payload structure
+    // Verify the payload structure and html attributes
     cy.get('iframe#preview-pane').then($iframe => {
       const win = $iframe[0].contentWindow;
-      expect(win.__last_preview_payload).to.not.be.null;
-      expect(win.__last_preview_payload.type).to.equal('DECAP_CMS_PREVIEW_DATA');
-      expect(win.__last_preview_payload.collection).to.equal('kitchenSink');
-      expect(win.__last_preview_payload.data.title).to.equal('Live Astro Preview Updated');
+      const payload = win.__last_preview_payload;
+      expect(payload).to.not.be.null;
+      expect(payload.type).to.equal('DECAP_CMS_PREVIEW_DATA');
+      expect(payload.collection).to.equal('kitchenSink');
+      expect(payload.data.title).to.equal('Live Astro Preview Updated');
+      // Verify html property is provided in payload, data, and post
+      expect(payload.html).to.be.a('string');
+      expect(payload.data.html).to.be.a('string');
+      expect(payload.post).to.not.be.null;
+      expect(payload.post.html).to.be.a('string');
+      expect(payload.post.data.title).to.equal('Live Astro Preview Updated');
     });
   });
 });

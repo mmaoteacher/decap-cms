@@ -1,6 +1,7 @@
 import controlComponent from './MarkdownControl';
 import previewComponent from './MarkdownPreview';
 import schema from './schema';
+import { markdownToHtml } from './serializers';
 
 function Widget(opts = {}) {
   return {
@@ -8,9 +9,16 @@ function Widget(opts = {}) {
     controlComponent,
     previewComponent,
     schema,
+    markdownToHtml,
     ...opts,
   };
 }
 
-export const DecapCmsWidgetMarkdown = { Widget, controlComponent, previewComponent };
+export { markdownToHtml };
+export const DecapCmsWidgetMarkdown = {
+  Widget,
+  controlComponent,
+  previewComponent,
+  markdownToHtml,
+};
 export default DecapCmsWidgetMarkdown;

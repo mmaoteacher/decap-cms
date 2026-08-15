@@ -4,6 +4,8 @@ import styled from '@emotion/styled';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import { lengths } from 'decap-cms-ui-default';
 
+import { resolveWidget } from '../../../lib/registry';
+
 const StyledExternalFrame = styled.iframe`
   width: 100%;
   height: 100%;
@@ -91,15 +93,70 @@ export default class ExternalPreviewFrame extends React.Component {
     return 'DECAP_CMS_PREVIEW_DATA';
   }
 
+  getHtml() {
+    const { entry, collection, previewProps } = this.props;
+    const rawData = (entry && entry.toJS ? entry.toJS().data : entry && entry.data) || {};
+
+    if (typeof rawData.html === 'string' && rawData.html) {
+      return rawData.html;
+    }
+
+    let markdownField = 'body';
+    if (!rawData.body && collection && collection.get) {
+      const fields = collection.get('fields');
+      if (fields) {
+        const mdFieldObj = fields.find(
+          f => f.get('widget') === 'markdown' || f.get('widget') === 'richtext',
+        );
+        if (mdFieldObj) {
+          markdownField = mdFieldObj.get('name');
+        }
+      }
+    }
+
+    const markdownValue = rawData[markdownField];
+    if (typeof markdownValue !== 'string' || !markdownValue) {
+      return '';
+    }
+
+    // Try using registered markdown or richtext widget's markdownToHtml
+    try {
+      const widget = resolveWidget('markdown') || resolveWidget('richtext');
+      if (widget && typeof widget.markdownToHtml === 'function') {
+        const getAsset = previewProps && previewProps.getAsset;
+        const remarkPlugins =
+          previewProps && previewProps.getRemarkPlugins ? previewProps.getRemarkPlugins() : [];
+        return widget.markdownToHtml(markdownValue, { getAsset, resolveWidget, remarkPlugins });
+      }
+    } catch (e) {
+      console.warn('Error converting markdown to HTML in ExternalPreviewFrame:', e);
+    }
+
+    return markdownValue;
+  }
+
   getPayload() {
     const { entry, collection } = this.props;
     const entryData = entry && entry.toJS ? entry.toJS() : entry;
     const collectionName = collection && collection.get ? collection.get('name') : '';
+    const rawData = (entryData && entryData.data) || {};
+    const htmlContent = this.getHtml();
+
+    const dataWithHtml = {
+      ...rawData,
+      html: rawData.html || htmlContent,
+    };
 
     return {
       type: this.getMessageType(),
       entry: entryData,
-      data: (entryData && entryData.data) || {},
+      data: dataWithHtml,
+      html: htmlContent,
+      post: {
+        data: rawData,
+        body: rawData.body || '',
+        html: htmlContent,
+      },
       collection: collectionName,
       isModification: entry && entry.get ? entry.get('isModification') : null,
     };
