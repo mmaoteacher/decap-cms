@@ -12,6 +12,7 @@ import {
   resolveWidget,
   getPreviewTemplate,
   getPreviewStyles,
+  getPreviewScripts,
   getRemarkPlugins,
   getEditorComponents,
 } from '../../../lib/registry';
@@ -269,13 +270,36 @@ export class PreviewPane extends React.Component {
 
     const styleEls = getPreviewStyles().map((style, i) => {
       if (style.raw) {
-        return <style key={i}>{style.value}</style>;
+        return <style key={`style-${i}`}>{style.value}</style>;
       }
-      return <link key={i} href={style.value} type="text/css" rel="stylesheet" />;
+      return <link key={`style-${i}`} href={style.value} type="text/css" rel="stylesheet" />;
     });
 
+    const scriptEls = getPreviewScripts().map((script, i) => {
+      if (script.raw || script.code) {
+        return (
+          <script
+            key={`script-${i}`}
+            type={script.type || 'text/javascript'}
+            dangerouslySetInnerHTML={{ __html: script.value || script.code }}
+          />
+        );
+      }
+      return (
+        <script
+          key={`script-${i}`}
+          src={script.value || script.src}
+          type={script.type || 'text/javascript'}
+          async={script.async}
+          defer={script.defer}
+        />
+      );
+    });
+
+    const headEls = [...styleEls, ...scriptEls];
+
     if (!collection) {
-      <PreviewPaneFrame id="preview-pane" head={styleEls} />;
+      <PreviewPaneFrame id="preview-pane" head={headEls} />;
     }
 
     const initialContent = `
@@ -288,7 +312,7 @@ export class PreviewPane extends React.Component {
 
     return (
       <ErrorBoundary config={config}>
-        <PreviewPaneFrame id="preview-pane" head={styleEls} initialContent={initialContent}>
+        <PreviewPaneFrame id="preview-pane" head={headEls} initialContent={initialContent}>
           <FrameContextConsumer>
             {({ document, window }) => {
               return (
