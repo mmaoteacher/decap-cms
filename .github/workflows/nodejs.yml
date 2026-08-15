@@ -48,8 +48,17 @@ jobs:
           node-version: ${{ matrix.node-version }}
           check-latest: true
           cache: 'npm'
-      - name: log versions
-        run: node --version && npm --version
+      - name: Restore Test & Compiler Caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            .nx/cache
+            node_modules/.cache
+          key: unit-cache-${{ runner.os }}-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            unit-cache-${{ runner.os }}-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}-
+            unit-cache-${{ runner.os }}-${{ matrix.node-version }}-
+
       - name: install dependencies (skip Cypress binary)
         run: npm ci
         env:
