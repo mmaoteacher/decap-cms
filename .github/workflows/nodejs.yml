@@ -61,6 +61,10 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.cms == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js 24.x
@@ -89,9 +93,11 @@ jobs:
         run: npm run build:demo
       - name: test package integrity
         run: npm run test:package-integrity
-      - name: run e2e tests
+      - name: run e2e tests (Shard ${{ matrix.shard }}/4)
         run: npm run test:e2e:run-ci
         env:
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_TOTAL: 4
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
           NODE_OPTIONS: --max-old-space-size=4096
           TZ: Europe/Amsterdam
@@ -100,7 +106,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: cypress-results
+          name: cypress-results-shard-${{ matrix.shard }}
           path: |
             cypress/screenshots
             cypress/videos
