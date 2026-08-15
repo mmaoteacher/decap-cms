@@ -120,12 +120,22 @@
 
   <script src="dist/decap-cms.js"></script>
   <script>
+    CMS.registerPreviewScript({
+      code: 'window.__preview_script_loaded = true; window.formatPreviewHeading = function(text) { return "✨ " + text + " ✨"; };'
+    });
+
     var PostPreview = createClass({
       render: function() {
         var entry = this.props.entry;
-        return h('div', {},
+        var frameWin = this.props.window;
+        var rawTitle = entry.getIn(['data', 'title']);
+        var formattedTitle = (frameWin && typeof frameWin.formatPreviewHeading === 'function')
+          ? frameWin.formatPreviewHeading(rawTitle)
+          : rawTitle;
+
+        return h('div', { id: 'custom-post-preview' },
           h('div', {className: "cover"},
-            h('h1', {}, entry.getIn(['data', 'title'])),
+            h('h1', { id: 'preview-injected-title' }, formattedTitle),
             this.props.widgetFor('image'),
           ),
           h('p', {},
@@ -282,3 +292,4 @@
   </script>
 </body>
 </html>
+
