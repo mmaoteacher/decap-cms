@@ -1,0 +1,99 @@
+name: Publish Develop Prerelease & Pages
+
+concurrency:
+  group: prerelease-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Optional custom release tag (e.g. v3.15.2-beta.1). If empty, dev-<short_sha> is used.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          CYPRESS_INSTALL_BINARY: 0
+
+      - name: Build ESM & Distribution Packages
+        run: |
+          npm run build:esm
+          npx nx run decap-cms:build
+
+      - name: Prepare GitHub Pages site directory
+        run: |
+          mkdir -p _site/dist
+          cp -r packages/decap-cms/dist/* _site/dist/
+          echo '{"branch":"develop","commit":"${{ github.sha }}","built_at":"'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"}' > _site/dist/version.json
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Publish GitHub Pre-Release with Assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          CUSTOM_TAG="${{ github.event.inputs.tag_name }}"
+          TAG="${CUSTOM_TAG:-dev-$SHORT_SHA}"
+
+          echo "Publishing release with tag: $TAG"
+
+          # 1. Create specific version / commit pre-release
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" packages/decap-cms/dist/* --clobber
+          else
+            gh release create "$TAG" packages/decap-cms/dist/* \
+              --title "Pre-release $TAG" \
+              --notes "Automated pre-release build from develop branch ($SHORT_SHA)." \
+              --prerelease \
+              --target "${{ github.sha }}"
+          fi
+
+          # 2. Update rolling dev-latest release
+          if gh release view "dev-latest" >/dev/null 2>&1; then
+            gh release upload "dev-latest" packages/decap-cms/dist/* --clobber
+          else
+            gh release create "dev-latest" packages/decap-cms/dist/* \
+              --title "Latest Develop Build (dev-latest)" \
+              --notes "Rolling pre-release build tracking the latest develop commit." \
+              --prerelease \
+              --target "${{ github.sha }}"
+          fi
