@@ -332,5 +332,79 @@ describe('registry', () => {
       });
     });
   });
-});
 
+  describe('previewUrls', () => {
+    it('can register a preview URL as a string', () => {
+      const { registerPreviewUrl, getPreviewUrl } = require('../registry');
+
+      registerPreviewUrl('posts', 'http://localhost:4321/preview');
+
+      expect(getPreviewUrl('posts')).toEqual({
+        url: 'http://localhost:4321/preview',
+      });
+    });
+
+    it('can register a preview URL as a function', () => {
+      const { registerPreviewUrl, getPreviewUrl } = require('../registry');
+      function urlFn({ entry }) {
+        return `/preview?slug=${entry.get('slug')}`;
+      }
+
+      registerPreviewUrl('posts', urlFn);
+
+      expect(getPreviewUrl('posts')).toEqual({
+        url: urlFn,
+      });
+    });
+
+    it('can register a preview URL with options', () => {
+      const { registerPreviewUrl, getPreviewUrl } = require('../registry');
+
+      registerPreviewUrl('posts', {
+        url: 'http://localhost:4321/preview',
+        targetOrigin: 'http://localhost:4321',
+        messageType: 'CMS_PREVIEW_DATA',
+      });
+
+      expect(getPreviewUrl('posts')).toEqual({
+        url: 'http://localhost:4321/preview',
+        targetOrigin: 'http://localhost:4321',
+        messageType: 'CMS_PREVIEW_DATA',
+      });
+    });
+
+    it('falls back to wildcard preview URL when specific collection is not found', () => {
+      const { registerPreviewUrl, getPreviewUrl } = require('../registry');
+
+      registerPreviewUrl('*', '/preview');
+
+      expect(getPreviewUrl('unknown_collection')).toEqual({
+        url: '/preview',
+      });
+    });
+  });
+
+  describe('previewPanes', () => {
+    it('can register and get a custom preview pane component', () => {
+      const { registerPreviewPane, getPreviewPane } = require('../registry');
+      function CustomPane() {
+        return null;
+      }
+
+      registerPreviewPane('posts', CustomPane);
+
+      expect(getPreviewPane('posts')).toBe(CustomPane);
+    });
+
+    it('falls back to wildcard preview pane when specific collection is not found', () => {
+      const { registerPreviewPane, getPreviewPane } = require('../registry');
+      function GlobalPane() {
+        return null;
+      }
+
+      registerPreviewPane('*', GlobalPane);
+
+      expect(getPreviewPane('unknown_collection')).toBe(GlobalPane);
+    });
+  });
+});

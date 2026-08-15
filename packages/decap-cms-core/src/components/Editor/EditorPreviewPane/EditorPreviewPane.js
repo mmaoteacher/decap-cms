@@ -13,6 +13,8 @@ import {
   getPreviewTemplate,
   getPreviewStyles,
   getPreviewScripts,
+  getPreviewUrl,
+  getPreviewPane,
   getRemarkPlugins,
   getEditorComponents,
 } from '../../../lib/registry';
@@ -27,6 +29,7 @@ import { boundGetAsset } from '../../../actions/media';
 import { selectIsLoadingAsset } from '../../../reducers/medias';
 import { INFERABLE_FIELDS } from '../../../constants/fieldInference';
 import EditorPreviewContent from './EditorPreviewContent.js';
+import ExternalPreviewFrame from './ExternalPreviewFrame.js';
 import PreviewHOC from './PreviewHOC';
 import EditorPreview from './EditorPreview';
 
@@ -332,6 +335,34 @@ export class PreviewPane extends React.Component {
       getCollection: this.getCollection,
       getEditorComponents,
     };
+
+    const collectionName = collection ? collection.get('name') : null;
+
+    const customPreviewPane = collectionName ? getPreviewPane(collectionName) : null;
+    if (customPreviewPane) {
+      const CustomPaneComponent = customPreviewPane;
+      return (
+        <ErrorBoundary config={config}>
+          <CustomPaneComponent {...previewProps} />
+        </ErrorBoundary>
+      );
+    }
+
+    const previewUrlConfig = collectionName
+      ? getPreviewUrl(collectionName) || (collection && collection.get('preview_url'))
+      : null;
+    if (previewUrlConfig) {
+      return (
+        <ErrorBoundary config={config}>
+          <ExternalPreviewFrame
+            previewUrlConfig={previewUrlConfig}
+            collection={collection}
+            entry={previewEntry}
+            previewProps={previewProps}
+          />
+        </ErrorBoundary>
+      );
+    }
 
     const styleEls = getPreviewStyles().map((style, i) => {
       if (style.raw) {

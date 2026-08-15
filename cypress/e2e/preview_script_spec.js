@@ -1,3 +1,4 @@
+/* eslint-disable cypress/no-unnecessary-waiting */
 describe('Preview script injection and iframe context', () => {
   it('injects registered scripts into preview iframe and provides iframe context to preview components', () => {
     cy.visit('/#/collections/posts/entries/2026-08-16-post-number-20');
@@ -11,7 +12,7 @@ describe('Preview script injection and iframe context', () => {
     // Wait for preview content to render inside the iframe
     cy.get('iframe#preview-pane').then($iframe => {
       // Poll until iframe body has content
-      const checkContent = (retries = 20) => {
+      function checkContent(retries = 20) {
         const doc = $iframe[0].contentDocument || $iframe[0].contentWindow.document;
         const body = doc && doc.body;
         if (body && body.innerHTML.trim().length > 10 && retries > 0) {
@@ -21,7 +22,7 @@ describe('Preview script injection and iframe context', () => {
           throw new Error('iframe body never populated');
         }
         return cy.wait(500).then(() => checkContent(retries - 1));
-      };
+      }
       return checkContent();
     });
 
@@ -48,7 +49,8 @@ describe('Preview script injection and iframe context', () => {
       .as('titleInput');
 
     // Clear and retype to trigger a re-render of the preview
-    cy.get('@titleInput').clear().type('Test Preview Script');
+    cy.get('@titleInput').clear();
+    cy.get('@titleInput').type('Test Preview Script');
 
     // Now the preview should re-render with formatPreviewHeading available
     cy.get('iframe#preview-pane').then($iframe => {
