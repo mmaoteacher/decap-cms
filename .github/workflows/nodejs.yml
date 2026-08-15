@@ -57,8 +57,37 @@ jobs:
       - name: run lint + types + unit tests
         run: npm run test:ci
 
-  e2e:
+  build-demo:
     needs: changes
+    if: ${{ needs.changes.outputs.cms == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          check-latest: true
+          cache: 'npm'
+      - name: install dependencies (skip Cypress binary)
+        run: npm ci
+        env:
+          CYPRESS_INSTALL_BINARY: 0
+      - name: build demo site
+        run: npm run build:demo
+      - name: test package integrity
+        run: npm run test:package-integrity
+      - name: Upload build artifacts for E2E runners
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-demo-and-packages
+          path: |
+            packages/*/dist
+            dev-test/dist
+          retention-days: 1
+
+  e2e:
+    needs: [changes, build-demo]
     if: ${{ needs.changes.outputs.cms == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     strategy:
@@ -73,13 +102,6 @@ jobs:
           node-version: 24.x
           check-latest: true
           cache: 'npm'
-      - name: Cache Nx local cache
-        uses: actions/cache@v4
-        with:
-          path: .nx/cache
-          key: nx-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            nx-${{ runner.os }}-
       - name: Cache Cypress binary
         uses: actions/cache@v4
         with:
@@ -89,10 +111,10 @@ jobs:
             cypress-${{ runner.os }}-
       - name: install dependencies
         run: npm ci
-      - name: build demo site
-        run: npm run build:demo
-      - name: test package integrity
-        run: npm run test:package-integrity
+      - name: Download pre-built demo and packages
+        uses: actions/download-artifact@v4
+        with:
+          name: built-demo-and-packages
       - name: run e2e tests (Shard ${{ matrix.shard }}/4)
         run: npm run test:e2e:run-ci
         env:
