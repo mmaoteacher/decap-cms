@@ -21,6 +21,7 @@ function rules() {
       use: {
         loader: 'babel-loader',
         options: {
+          cacheDirectory: true,
           rootMode: 'upward',
         },
       },
@@ -130,6 +131,12 @@ const umdExternals = Object.keys(pkg.peerDependencies || {}).reduce((previous, k
  */
 function baseConfig({ target = isProduction ? 'umd' : 'umddir' } = {}) {
   return {
+    cache: {
+      type: 'filesystem',
+      buildDependencies: {
+        config: [__filename],
+      },
+    },
     context: process.cwd(),
     mode: isProduction ? 'production' : 'development',
     entry: './src',
