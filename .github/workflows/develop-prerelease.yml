@@ -23,9 +23,6 @@ permissions:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -48,23 +45,39 @@ jobs:
           npm run build:esm
           npx nx run decap-cms:build
 
-      - name: Prepare GitHub Pages site directory
+      - name: Prepare site directory
         run: |
           mkdir -p _site/dist
           cp -r packages/decap-cms/dist/* _site/dist/
           echo '{"branch":"develop","commit":"${{ github.sha }}","built_at":"'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"}' > _site/dist/version.json
 
-      - name: Setup GitHub Pages
+      - name: Deploy to gh-pages branch (Direct CDN)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
+          keep_files: false
+        continue-on-error: true
+
+      - name: Setup GitHub Pages (GitHub Actions provider)
+        id: pages_setup
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
+        continue-on-error: true
 
       - name: Upload GitHub Pages artifact
+        if: steps.pages_setup.outcome == 'success'
         uses: actions/upload-pages-artifact@v3
         with:
           path: '_site'
+        continue-on-error: true
 
       - name: Deploy to GitHub Pages
+        if: steps.pages_setup.outcome == 'success'
         id: deployment
         uses: actions/deploy-pages@v4
+        continue-on-error: true
 
       - name: Publish GitHub Pre-Release with Assets
         env:
