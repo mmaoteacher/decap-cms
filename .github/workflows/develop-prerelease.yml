@@ -17,7 +17,6 @@ on:
 
 permissions:
   contents: write
-  pages: write
   id-token: write
 
 jobs:
@@ -57,27 +56,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./_site
           keep_files: false
-        continue-on-error: true
-
-      - name: Setup GitHub Pages (GitHub Actions provider)
-        id: pages_setup
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-        continue-on-error: true
-
-      - name: Upload GitHub Pages artifact
-        if: steps.pages_setup.outcome == 'success'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '_site'
-        continue-on-error: true
-
-      - name: Deploy to GitHub Pages
-        if: steps.pages_setup.outcome == 'success'
-        id: deployment
-        uses: actions/deploy-pages@v4
-        continue-on-error: true
 
       - name: Publish GitHub Pre-Release with Assets
         env:
