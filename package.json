@@ -2,8 +2,8 @@
   "scripts": {
     "start": "npm run develop",
     "develop": "nx run-many -t develop --parallel=999 --output-style=stream --exclude=decap-server",
-    "build": "npm run build:esm && nx run-many -t build",
-    "build:esm": "nx run-many -t build:esm",
+    "build": "npm run build:esm && nx run-many -t build --parallel=4",
+    "build:esm": "nx run-many -t build:esm --parallel=4",
     "build:demo": "npm run build && ncp packages/decap-cms/dist dev-test/dist/",
     "build-preview": "npm run build && nx run decap-cms:build-preview --output-style=stream",
     "type-check": "tsc --noEmit",

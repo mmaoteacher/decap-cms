@@ -69,6 +69,16 @@ jobs:
           node-version: 24.x
           check-latest: true
           cache: 'npm'
+      - name: Restore Build Caches (Nx, Webpack & Babel)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .nx/cache
+            node_modules/.cache
+          key: build-cache-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            build-cache-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
+            build-cache-${{ runner.os }}-
       - name: install dependencies (skip Cypress binary)
         run: npm ci
         env:
