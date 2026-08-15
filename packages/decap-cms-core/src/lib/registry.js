@@ -25,6 +25,8 @@ const registry = {
   templates: {},
   previewStyles: [],
   previewScripts: [],
+  previewUrls: {},
+  previewPanes: {},
   widgets: {},
   editorComponents: Map(),
   remarkPlugins: [],
@@ -40,6 +42,10 @@ export default {
   getPreviewStyles,
   registerPreviewScript,
   getPreviewScripts,
+  registerPreviewUrl,
+  getPreviewUrl,
+  registerPreviewPane,
+  getPreviewPane,
   registerPreviewTemplate,
   getPreviewTemplate,
   registerWidget,
@@ -107,6 +113,36 @@ export function registerPreviewScript(script, opts = {}) {
 }
 export function getPreviewScripts() {
   return registry.previewScripts;
+}
+
+/**
+ * Preview URLs
+ *
+ * Valid options:
+ *  - url {string|function} target preview URL or function returning URL
+ *  - targetOrigin {string} postMessage targetOrigin (default '*')
+ *  - messageType {string} postMessage event type (default 'DECAP_CMS_PREVIEW_DATA')
+ *  - handler {function} optional custom handler (entry, iframe) => void
+ */
+export function registerPreviewUrl(name, urlOrOptions, opts = {}) {
+  if (typeof urlOrOptions === 'string' || typeof urlOrOptions === 'function') {
+    registry.previewUrls[name] = { ...opts, url: urlOrOptions };
+  } else if (typeof urlOrOptions === 'object' && urlOrOptions !== null) {
+    registry.previewUrls[name] = { ...opts, ...urlOrOptions };
+  }
+}
+export function getPreviewUrl(name) {
+  return registry.previewUrls[name] || registry.previewUrls['*'];
+}
+
+/**
+ * Preview Panes (Full Preview Component Override)
+ */
+export function registerPreviewPane(name, component) {
+  registry.previewPanes[name] = component;
+}
+export function getPreviewPane(name) {
+  return registry.previewPanes[name] || registry.previewPanes['*'];
 }
 
 /**

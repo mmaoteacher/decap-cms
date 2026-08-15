@@ -521,6 +521,20 @@ declare module 'decap-cms-core' {
     | { code: string; type?: string; raw?: boolean }
     | (PreviewScriptOptions & { value: string });
 
+  export type PreviewUrlFunction = (ctx: {
+    entry: Map<string, any>;
+    collection: Map<string, any>;
+  }) => string;
+
+  export interface PreviewUrlOptions {
+    url?: string | PreviewUrlFunction;
+    targetOrigin?: string;
+    messageType?: string;
+    handler?: (entry: Map<string, any>, iframe: HTMLIFrameElement) => void;
+  }
+
+  export type PreviewUrl = string | PreviewUrlFunction | PreviewUrlOptions;
+
   export function usePreviewFrame(): { window: Window; document: Document };
 
   export type CmsBackendClass = any; // TODO: type properly
@@ -597,6 +611,12 @@ declare module 'decap-cms-core' {
     };
     previewStyles: PreviewStyle[];
     previewScripts: PreviewScript[];
+    previewUrls: {
+      [name: string]: PreviewUrlOptions;
+    };
+    previewPanes: {
+      [name: string]: ComponentType<any>;
+    };
     widgets: {
       [name: string]: CmsWidget;
     };
@@ -644,6 +664,8 @@ declare module 'decap-cms-core' {
     getMediaLibrary: (name: string) => CmsMediaLibrary | undefined;
     getPreviewStyles: () => PreviewStyle[];
     getPreviewScripts: () => PreviewScript[];
+    getPreviewUrl: (name: string) => PreviewUrlOptions | undefined;
+    getPreviewPane: (name: string) => ComponentType<any> | undefined;
     getPreviewTemplate: (name: string) => ComponentType<PreviewTemplateComponentProps> | undefined;
     getWidget: (name: string) => CmsWidget | undefined;
     getWidgetValueSerializer: (widgetName: string) => CmsWidgetValueSerializer | undefined;
@@ -659,6 +681,12 @@ declare module 'decap-cms-core' {
     registerMediaLibrary: (mediaLibrary: CmsMediaLibrary, options?: CmsMediaLibraryOptions) => void;
     registerPreviewStyle: (filePath: string, options?: PreviewStyleOptions) => void;
     registerPreviewScript: (script: PreviewScript, options?: PreviewScriptOptions) => void;
+    registerPreviewUrl: (
+      name: string,
+      urlOrOptions: PreviewUrl,
+      options?: PreviewUrlOptions,
+    ) => void;
+    registerPreviewPane: (name: string, component: ComponentType<any>) => void;
     usePreviewFrame: () => { window: Window; document: Document };
     registerPreviewTemplate: (
       name: string,
