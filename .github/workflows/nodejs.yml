@@ -47,7 +47,10 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           check-latest: true
-          cache: 'npm'
+      - name: install dependencies (skip Cypress binary)
+        run: npm ci
+        env:
+          CYPRESS_INSTALL_BINARY: 0
       - name: Restore Test & Compiler Caches
         uses: actions/cache@v4
         with:
@@ -58,11 +61,6 @@ jobs:
           restore-keys: |
             unit-cache-${{ runner.os }}-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}-
             unit-cache-${{ runner.os }}-${{ matrix.node-version }}-
-
-      - name: install dependencies (skip Cypress binary)
-        run: npm ci
-        env:
-          CYPRESS_INSTALL_BINARY: 0
       - name: run lint + types + unit tests
         run: npm run test:ci
 
@@ -78,6 +76,10 @@ jobs:
           node-version: 24.x
           check-latest: true
           cache: 'npm'
+      - name: install dependencies (skip Cypress binary)
+        run: npm ci
+        env:
+          CYPRESS_INSTALL_BINARY: 0
       - name: Restore Build Caches (Nx, Webpack & Babel)
         uses: actions/cache@v4
         with:
@@ -88,10 +90,6 @@ jobs:
           restore-keys: |
             build-cache-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
             build-cache-${{ runner.os }}-
-      - name: install dependencies (skip Cypress binary)
-        run: npm ci
-        env:
-          CYPRESS_INSTALL_BINARY: 0
       - name: build demo site
         run: npm run build:demo
       - name: test package integrity
