@@ -2,7 +2,7 @@ import yaml from 'yaml';
 
 import { sortKeys } from './helpers';
 
-import type { YAMLMap, YAMLSeq, Pair, Node } from 'yaml';
+import type { Pair, Node } from 'yaml';
 
 function addComments(items: Array<Pair>, comments: Record<string, string>, prefix = '') {
   items.forEach(item => {
@@ -61,15 +61,13 @@ export default {
   },
 
   toFile(data: object, sortedKeys: string[] = [], comments: Record<string, string> = {}) {
-    const doc = new yaml.Document();
-    const contents = doc.createNode(data) as YAMLMap | YAMLSeq;
+    const doc = new yaml.Document(data);
+    const contents = doc.contents as { items?: Array<Pair> } | null;
 
-    addComments(contents.items as Array<Pair>, comments);
-
-    (contents.items as Array<Pair>).sort(
-      sortKeys(sortedKeys, (item: Pair) => String(item.key ?? '')),
-    );
-    doc.contents = contents;
+    if (contents && Array.isArray(contents.items)) {
+      addComments(contents.items, comments);
+      contents.items.sort(sortKeys(sortedKeys, (item: Pair) => String(item.key ?? '')));
+    }
 
     return doc.toString();
   },
