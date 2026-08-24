@@ -469,10 +469,20 @@ declare module 'decap-cms-core' {
         fields?: EditorComponentField[];
       };
 
+  export interface EditorComponentToolbarOptions {
+    placement?: 'top' | 'menu';
+    icon?: string | React.ReactNode;
+    group?: string;
+  }
+
   export interface BlockEditorComponentOptions {
     id: string;
     label: string;
     type?: 'block';
+    icon?: string | React.ReactNode;
+    toolbar?: EditorComponentToolbarOptions;
+    placement?: 'top' | 'menu';
+    isTopLevel?: boolean;
     fields?: EditorComponentField[];
     pattern: RegExp;
     allow_add?: boolean;
@@ -485,6 +495,10 @@ declare module 'decap-cms-core' {
     id: string;
     label: string;
     type: 'inline';
+    icon?: string | React.ReactNode;
+    toolbar?: EditorComponentToolbarOptions;
+    placement?: 'top' | 'menu';
+    isTopLevel?: boolean;
     isVoid?: boolean;
     trigger?: string;
     pattern: RegExp;
