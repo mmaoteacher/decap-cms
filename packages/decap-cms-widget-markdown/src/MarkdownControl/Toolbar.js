@@ -120,13 +120,25 @@ export default class Toolbar extends React.Component {
       t,
     } = this.props;
     const isVisible = this.isVisible;
-    const showEditorComponents = !editorComponents || editorComponents.size >= 1;
-
     const allPlugins = plugins ? plugins.toList().sortBy(plugin => plugin.label) : List();
 
     const pluginsList = editorComponents
       ? editorComponents.map(id => plugins.get(id)).filter(plugin => !!plugin)
       : allPlugins;
+
+    function isTopLevel(plugin) {
+      return Boolean(
+        plugin &&
+          (plugin.toolbar?.placement === 'top' ||
+            plugin.placement === 'top' ||
+            plugin.isTopLevel === true),
+      );
+    }
+
+    const topLevelPlugins = pluginsList.filter(isTopLevel);
+    const dropdownPlugins = pluginsList.filter(plugin => !isTopLevel(plugin));
+    const showEditorComponents =
+      (!editorComponents || editorComponents.size >= 1) && dropdownPlugins.size >= 1;
 
     const headingOptions = {
       'heading-one': t('editor.editorWidgets.headingOptions.headingOne'),
@@ -253,6 +265,16 @@ export default class Toolbar extends React.Component {
               disabled={disabled}
             />
           )}
+          {topLevelPlugins.map(plugin => (
+            <ToolbarButton
+              key={plugin.id}
+              type={plugin.id}
+              label={plugin.label}
+              icon={plugin.toolbar?.icon || plugin.icon}
+              onClick={() => onSubmit(plugin)}
+              disabled={disabled}
+            />
+          ))}
           {showEditorComponents && (
             <ToolbarDropdownWrapper>
               <Dropdown
@@ -269,7 +291,7 @@ export default class Toolbar extends React.Component {
                   </DropdownButton>
                 )}
               >
-                {pluginsList.map((plugin, idx) => (
+                {dropdownPlugins.map((plugin, idx) => (
                   <DropdownItem key={idx} label={plugin.label} onClick={() => onSubmit(plugin)} />
                 ))}
               </Dropdown>

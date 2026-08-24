@@ -1,3 +1,4 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 import styled from '@emotion/styled';
 import { Icon, buttons } from 'decap-cms-ui-default';
@@ -23,6 +24,90 @@ const StyledToolbarButton = styled.button`
 `;
 
 function ToolbarButton({ type, label, icon, onClick, isActive, disabled }) {
+  function renderIcon() {
+    if (!icon) return label;
+    if (typeof icon === 'string') {
+      const trimmed = icon.trim();
+      if (trimmed.startsWith('<svg')) {
+        return (
+          <span
+            style={{
+              display: 'inline-flex',
+              width: '18px',
+              height: '18px',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            dangerouslySetInnerHTML={{ __html: trimmed }}
+          />
+        );
+      }
+      const isKnownIcon = [
+        'add',
+        'add-with',
+        'arrow',
+        'bold',
+        'chevron',
+        'chevron-double',
+        'close',
+        'code',
+        'code-block',
+        'drag-handle',
+        'error',
+        'folder',
+        'grid',
+        'hOptions',
+        'image',
+        'info',
+        'italic',
+        'link',
+        'list',
+        'list-bulleted',
+        'list-numbered',
+        'markdown',
+        'media',
+        'media-alt',
+        'pages',
+        'preview',
+        'quote',
+        'refresh',
+        'search',
+        'settings',
+        'strikethrough',
+        'sun',
+        'triangle-down',
+        'user',
+        'version',
+        'workflow',
+      ].includes(icon);
+
+      if (isKnownIcon) {
+        return <Icon type={icon} />;
+      }
+      return (
+        <span
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '15px',
+            lineHeight: 1,
+          }}
+        >
+          {icon}
+        </span>
+      );
+    }
+    if (React.isValidElement(icon)) {
+      return icon;
+    }
+    if (typeof icon === 'function') {
+      const IconComponent = icon;
+      return <IconComponent />;
+    }
+    return icon;
+  }
+
   return (
     <StyledToolbarButton
       isActive={isActive}
@@ -30,7 +115,7 @@ function ToolbarButton({ type, label, icon, onClick, isActive, disabled }) {
       title={label}
       disabled={disabled}
     >
-      {icon ? <Icon type={icon} /> : label}
+      {renderIcon()}
     </StyledToolbarButton>
   );
 }
@@ -38,7 +123,7 @@ function ToolbarButton({ type, label, icon, onClick, isActive, disabled }) {
 ToolbarButton.propTypes = {
   type: PropTypes.string,
   label: PropTypes.string.isRequired,
-  icon: PropTypes.string,
+  icon: PropTypes.oneOfType([PropTypes.string, PropTypes.element, PropTypes.func]),
   onClick: PropTypes.func,
   isActive: PropTypes.bool,
   disabled: PropTypes.bool,
