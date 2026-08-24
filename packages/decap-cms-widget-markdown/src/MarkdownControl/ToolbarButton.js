@@ -33,10 +33,11 @@ function ToolbarButton({ type, label, icon, onClick, isActive, disabled }) {
           <span
             style={{
               display: 'inline-flex',
-              width: '18px',
-              height: '18px',
+              width: '24px',
+              height: '24px',
               alignItems: 'center',
               justifyContent: 'center',
+              lineHeight: 0,
             }}
             dangerouslySetInnerHTML={{ __html: trimmed }}
           />
@@ -88,9 +89,14 @@ function ToolbarButton({ type, label, icon, onClick, isActive, disabled }) {
         <span
           style={{
             display: 'inline-flex',
+            width: '24px',
+            height: '24px',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '15px',
+            fontSize: '13px',
+            fontWeight: '700',
+            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+            letterSpacing: '-0.5px',
             lineHeight: 1,
           }}
         >
