@@ -2,18 +2,22 @@ import yaml from 'yaml';
 
 import { sortKeys } from './helpers';
 
-import type { Pair, Node } from 'yaml';
+interface YamlPair {
+  key?: unknown;
+  value?: unknown;
+  commentBefore?: string;
+}
 
-function addComments(items: Array<Pair>, comments: Record<string, string>, prefix = '') {
+function addComments(items: Array<YamlPair>, comments: Record<string, string>, prefix = '') {
   items.forEach(item => {
     if (item.key != null) {
       const itemKey = String(item.key);
       const key = prefix ? `${prefix}.${itemKey}` : itemKey;
       if (comments[key]) {
         const value = comments[key].split('\\n').join('\n ');
-        (item as unknown as { commentBefore?: string }).commentBefore = ` ${value}`;
+        item.commentBefore = ` ${value}`;
       }
-      const itemValue = item.value as { items?: Array<Pair> } | null | undefined;
+      const itemValue = item.value as { items?: Array<YamlPair> } | null | undefined;
       if (itemValue && Array.isArray(itemValue.items)) {
         addComments(itemValue.items, comments, key);
       }
@@ -34,7 +38,7 @@ const timestampTag = {
       '$',
   ),
   resolve: (str: string) => new Date(str),
-  stringify: (value: Node) => (value as unknown as Date).toISOString(),
+  stringify: (value: unknown) => (value as Date).toISOString(),
 } as const;
 
 export default {
@@ -62,11 +66,11 @@ export default {
 
   toFile(data: object, sortedKeys: string[] = [], comments: Record<string, string> = {}) {
     const doc = new yaml.Document(data);
-    const contents = doc.contents as { items?: Array<Pair> } | null;
+    const contents = doc.contents as { items?: Array<YamlPair> } | null;
 
     if (contents && Array.isArray(contents.items)) {
       addComments(contents.items, comments);
-      contents.items.sort(sortKeys(sortedKeys, (item: Pair) => String(item.key ?? '')));
+      contents.items.sort(sortKeys(sortedKeys, (item: YamlPair) => String(item.key ?? '')));
     }
 
     return doc.toString();
