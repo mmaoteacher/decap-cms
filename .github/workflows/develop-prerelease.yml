@@ -68,11 +68,14 @@ jobs:
       - name: Pack NPM Package Tarballs (.tgz)
         run: |
           mkdir -p release-packages
-          # Pack key packages for direct installation from GitHub Release / CDN
+          # Pack key packages and create latest aliases for direct installation
           for pkg in decap-cms decap-cms-app decap-cms-core decap-cms-widget-markdown decap-cms-ui-default; do
             if [ -d "packages/$pkg" ]; then
               echo "Packaging $pkg..."
-              (cd "packages/$pkg" && npm pack --pack-destination ../../release-packages)
+              TARBALL=$(cd "packages/$pkg" && npm pack --pack-destination ../../release-packages | tail -n 1)
+              # Create fixed 'latest' aliases for CDN and GitHub Releases
+              cp "release-packages/$TARBALL" "release-packages/$pkg.tgz"
+              cp "release-packages/$TARBALL" "release-packages/$pkg-latest.tgz"
             fi
           done
           ls -la release-packages/
