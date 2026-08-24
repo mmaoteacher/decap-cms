@@ -14,6 +14,15 @@ on:
         description: 'Optional custom release tag (e.g. v3.15.2-beta.1). If empty, dev-<short_sha> is used.'
         required: false
         default: ''
+      publish_to_npm:
+        description: 'Publish canary/prerelease packages to npm'
+        type: boolean
+        required: false
+        default: false
+      npm_dist_tag:
+        description: 'NPM dist-tag for prerelease (e.g. develop, beta, next)'
+        required: false
+        default: 'develop'
 
 permissions:
   contents: write
@@ -33,6 +42,7 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: npm ci
@@ -53,12 +63,25 @@ jobs:
       - name: Build ESM & Distribution Packages
         run: |
           npm run build:esm
-          npx nx run decap-cms:build
+          npm run build
+
+      - name: Pack NPM Package Tarballs (.tgz)
+        run: |
+          mkdir -p release-packages
+          # Pack key packages for direct installation from GitHub Release / CDN
+          for pkg in decap-cms decap-cms-app decap-cms-core decap-cms-widget-markdown decap-cms-ui-default; do
+            if [ -d "packages/$pkg" ]; then
+              echo "Packaging $pkg..."
+              (cd "packages/$pkg" && npm pack --pack-destination ../../release-packages)
+            fi
+          done
+          ls -la release-packages/
 
       - name: Prepare site directory
         run: |
-          mkdir -p _site/dist
+          mkdir -p _site/dist _site/packages
           cp -r packages/decap-cms/dist/* _site/dist/
+          cp -r release-packages/* _site/packages/ || true
           echo '{"branch":"develop","commit":"${{ github.sha }}","built_at":"'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"}' > _site/dist/version.json
 
       - name: Deploy to gh-pages branch (Direct CDN)
@@ -68,7 +91,7 @@ jobs:
           publish_dir: ./_site
           keep_files: false
 
-      - name: Publish GitHub Pre-Release with Assets
+      - name: Publish GitHub Pre-Release with Assets & Packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -80,22 +103,30 @@ jobs:
 
           # 1. Create specific version / commit pre-release
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" packages/decap-cms/dist/* --clobber
+            gh release upload "$TAG" packages/decap-cms/dist/* release-packages/*.tgz --clobber
           else
-            gh release create "$TAG" packages/decap-cms/dist/* \
+            gh release create "$TAG" packages/decap-cms/dist/* release-packages/*.tgz \
               --title "Pre-release $TAG" \
-              --notes "Automated pre-release build from develop branch ($SHORT_SHA)." \
+              --notes "Automated pre-release build and package tarballs from develop branch ($SHORT_SHA)." \
               --prerelease \
               --target "${{ github.sha }}"
           fi
 
           # 2. Update rolling dev-latest release
           if gh release view "dev-latest" >/dev/null 2>&1; then
-            gh release upload "dev-latest" packages/decap-cms/dist/* --clobber
+            gh release upload "dev-latest" packages/decap-cms/dist/* release-packages/*.tgz --clobber
           else
-            gh release create "dev-latest" packages/decap-cms/dist/* \
+            gh release create "dev-latest" packages/decap-cms/dist/* release-packages/*.tgz \
               --title "Latest Develop Build (dev-latest)" \
-              --notes "Rolling pre-release build tracking the latest develop commit." \
+              --notes "Rolling pre-release build and package tarballs tracking the latest develop commit." \
               --prerelease \
               --target "${{ github.sha }}"
           fi
+
+      - name: Publish Prerelease to NPM (Optional)
+        if: ${{ github.event.inputs.publish_to_npm == 'true' }}
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          DIST_TAG="${{ github.event.inputs.npm_dist_tag || 'develop' }}"
+          echo "Publishing prerelease packages to npm with dist-tag: $DIST_TAG"
+          npx lerna publish --canary --dist-tag "$DIST_TAG" --preid "dev-$SHORT_SHA" --yes --no-private
