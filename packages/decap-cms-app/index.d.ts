@@ -511,7 +511,9 @@ declare module 'decap-cms-core' {
       selectedText?: string;
       cmsContext?: any;
     }) => Promise<Record<string, any> | null> | Record<string, any> | null;
-    onEdit?: (context: { data: Record<string, any> }) => Promise<Record<string, any> | null> | Record<string, any> | null;
+    onEdit?: (context: {
+      data: Record<string, any>;
+    }) => Promise<Record<string, any> | null> | Record<string, any> | null;
     [key: string]: any;
   }
 
@@ -727,10 +729,9 @@ declare module 'decap-cms-core' {
   export default DecapCmsCore;
 }
 
-
-declare module "decap-cms-app" {
-  export * from "decap-cms-core";
-  import type { CMS } from "decap-cms-core";
+declare module 'decap-cms-app' {
+  export * from 'decap-cms-core';
+  import type { CMS } from 'decap-cms-core';
 
   export const DecapCmsApp: CMS;
 
