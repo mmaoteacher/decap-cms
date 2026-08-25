@@ -470,18 +470,19 @@ declare module 'decap-cms-core' {
       };
 
   export interface EditorComponentToolbarOptions {
-    placement?: 'top' | 'menu';
+    placement?: 'top' | 'dropdown' | 'menu' | string;
     icon?: string | React.ReactNode;
     group?: string;
+    [key: string]: any;
   }
 
   export interface BlockEditorComponentOptions {
     id: string;
     label: string;
-    type?: 'block';
+    type?: 'block' | string;
     icon?: string | React.ReactNode;
     toolbar?: EditorComponentToolbarOptions;
-    placement?: 'top' | 'menu';
+    placement?: 'top' | 'dropdown' | 'menu' | string;
     isTopLevel?: boolean;
     fields?: EditorComponentField[];
     pattern: RegExp;
@@ -489,27 +490,29 @@ declare module 'decap-cms-core' {
     fromBlock: (match: RegExpMatchArray) => any;
     toBlock: (data: any) => string;
     toPreview: (data: any) => string | JSX.Element;
+    [key: string]: any;
   }
 
   export interface InlineEditorComponentOptions {
     id: string;
     label: string;
-    type: 'inline';
+    type: 'inline' | string;
     icon?: string | React.ReactNode;
     toolbar?: EditorComponentToolbarOptions;
-    placement?: 'top' | 'menu';
+    placement?: 'top' | 'dropdown' | 'menu' | string;
     isTopLevel?: boolean;
     isVoid?: boolean;
     trigger?: string;
     pattern: RegExp;
-    fromInline: (match: RegExpExecArray) => Record<string, any>;
+    fromInline: (match: RegExpMatchArray | RegExpExecArray) => Record<string, any>;
     toInline: (data: Record<string, any>) => string;
     toPreview: (data: Record<string, any>) => React.ReactNode;
     onInsert?: (context: {
-      selectedText: string;
-      cmsContext: any;
-    }) => Promise<Record<string, any> | null>;
-    onEdit?: (context: { data: Record<string, any> }) => Promise<Record<string, any> | null>;
+      selectedText?: string;
+      cmsContext?: any;
+    }) => Promise<Record<string, any> | null> | Record<string, any> | null;
+    onEdit?: (context: { data: Record<string, any> }) => Promise<Record<string, any> | null> | Record<string, any> | null;
+    [key: string]: any;
   }
 
   export type EditorComponentOptions = BlockEditorComponentOptions | InlineEditorComponentOptions;
